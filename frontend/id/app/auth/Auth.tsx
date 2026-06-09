@@ -3,25 +3,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Card } from "./Card";
 import { LogOut, Shield, ShieldCheck, Lock, Unlock, Database, User as UserIcon, RefreshCw, AlertTriangle } from "lucide-react";
-
-// Types
-interface UserProfile {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-}
-
-interface ApiResult {
-  [key: string]: unknown;
-}
+import { UserProfile, ApiResult } from "./interfaces";
 
 export function Auth() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // API testing states
   const [apiResult, setApiResult] = useState<ApiResult | null>(null);
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -34,7 +22,6 @@ export function Auth() {
   useEffect(() => {
     return () => {
       isMounted.current = false;
-      // Cancel any pending requests on unmount
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -67,12 +54,10 @@ export function Auth() {
   const testEndpoint = useCallback(async (path: string, requiresAuth = false) => {
     if (!isMounted.current) return;
 
-    // Cancel previous request if exists
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
 
     setApiLoading(true);
@@ -88,7 +73,7 @@ export function Auth() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api${path}`, {
+      const response = await fetch(`http://localhost:8000/api/v1${path}`, {
         headers,
         signal: abortControllerRef.current.signal,
       });
@@ -105,7 +90,6 @@ export function Auth() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
-        // Request was cancelled, ignore
         return;
       }
       const errorMessage = err instanceof Error ? err.message : "Error al realizar la consulta.";
@@ -168,7 +152,6 @@ export function Auth() {
     checkAuth();
   }, []);
 
-  // Memoize the buttons to prevent unnecessary re-renders
   const endpoints = useMemo(() => [
     {
       id: 'public',
@@ -178,7 +161,7 @@ export function Auth() {
       badge: 'Público',
       badgeColor: 'cyan',
       description: 'Acceso libre sin token. Retorna lista de elementos.',
-      code: 'GET /api/test/public',
+      code: 'GET /api/v1/test/public',
       icon: null
     },
     {
@@ -189,7 +172,7 @@ export function Auth() {
       badge: 'JWT',
       badgeColor: 'violet',
       description: 'Requiere JWT válido. Disponible para usuarios autenticados.',
-      code: 'GET /api/test/user-only',
+      code: 'GET /api/v1/test/user-only',
       icon: <ShieldCheck size={10} />
     },
     {
@@ -200,7 +183,7 @@ export function Auth() {
       badge: 'Admin-Only',
       badgeColor: 'rose',
       description: 'Requiere JWT válido y rol "admin". Acceso denegado a otros roles.',
-      code: 'GET /api/test/admin-only',
+      code: 'GET /api/test/v1/admin-only',
       icon: <Shield size={10} />
     }
   ], []);

@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.routes.models import schemas
+from src.routes.schemas import schemas_auth
 from src import config
 from src.db.session import get_db
 from src.db import models
@@ -48,7 +48,7 @@ async def get_current_user(
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = schemas.TokenData(username=username, role=payload.get("role"))
+        token_data = schemas_auth.TokenData(username=username, role=payload.get("role"))
     except JWTError:
         raise credentials_exception
         

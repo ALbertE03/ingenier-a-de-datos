@@ -1,6 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
+from src.rate_limit import limiter
 from src.routes.auth.Auth import router as auth_router
 from src.routes.test_routes.test import router as models_router
 from dotenv import load_dotenv
@@ -54,6 +57,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(429, _rate_limit_exceeded_handler)
+
 o = os.getenv("ORIGINS",[]).split(',')
 origins = [
     "http://localhost:3000",
@@ -70,8 +76,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api")
-app.include_router(models_router, prefix="/api")
+app.add_middleware(SlowAPIMiddleware)
+
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(models_router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.routes.models import schemas
+from src.rate_limit import limiter
+from src.routes.schemas import schemas_auth
 from src.db.session import get_db
 from src.db import models
 from src.utils import auth
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_in: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
-    # Check if username already exists
+@limiter.limit("5/minute")
+@router.post("/register", response_model=schemas_auth.UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(request: Request, user_in: schemas_auth.UserCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).filter(models.User.username == user_in.username))
     user_db = result.scalars().first()
     if user_db:
@@ -19,7 +20,6 @@ async def register(user_in: schemas.UserCreate, db: AsyncSession = Depends(get_d
             detail="El nombre de usuario ya está registrado"
         )
     
-    # Check if email already exists
     result = await db.execute(select(models.User).filter(models.User.email == user_in.email))
     user_db = result.scalars().first()
     if user_db:
@@ -28,21 +28,22 @@ async def register(user_in: schemas.UserCreate, db: AsyncSession = Depends(get_d
             detail="El correo electrónico ya está registrado"
         )
     
-    # Create new user
     hashed_password = auth.get_password_hash(user_in.password)
     db_user = models.User(
         username=user_in.username,
         email=user_in.email,
         hashed_password=hashed_password,
-        role="user"  # All users registered through the frontend/API are default "user"
+        role="user"  
     )
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
     return db_user
 
-@router.post("/login", response_model=schemas.Token)
-async def login(credentials: schemas.UserLogin, db: AsyncSession = Depends(get_db)):
+
+@limiter.limit("10/minute")
+@router.post("/login", response_model=schemas_auth.Token)
+async def login(request: Request, credentials: schemas_auth.UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.User).filter(models.User.username == credentials.username))
     user = result.scalars().first()
     if not user or not auth.verify_password(credentials.password, user.hashed_password):
@@ -58,11 +59,11 @@ async def login(credentials: schemas.UserLogin, db: AsyncSession = Depends(get_d
             detail="Usuario inactivo"
         )
     
-    # Generate token
     access_token = auth.create_access_token(data={"sub": user.username, "role": user.role})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=schemas.UserResponse)
-def get_me(current_user: models.User = Depends(auth.get_current_active_user)):
+@limiter.limit("30/minute")
+@router.get("/me", response_model=schemas_auth.UserResponse)
+def get_me(request: Request, current_user: models.User = Depends(auth.get_current_active_user)):
     return current_user
 

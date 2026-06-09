@@ -2,20 +2,10 @@
 
 import React, { useState, useCallback, useMemo, memo } from "react";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { CardProps } from "./interfaces";
 
-// Types
-interface UserProfile {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-}
 
-interface CardProps {
-  onSuccess: (token: string, user: UserProfile) => void;
-}
 
-// Memoized input component to prevent re-renders
 const InputField = memo(({
   icon: Icon,
   type,
@@ -64,20 +54,19 @@ export const Card = memo(function Card({ onSuccess }: CardProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form states
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setIsLoading(true);
 
-    const baseUrl = "http://localhost:8000/api";
+    const baseUrl = "http://localhost:8000/api/v1";
 
     try {
       if (isLogin) {
@@ -103,7 +92,7 @@ export const Card = memo(function Card({ onSuccess }: CardProps) {
         setSuccess("¡Sesión iniciada con éxito! Redirigiendo...");
         setTimeout(() => {
           onSuccess(token, userProfile);
-        }, 500); // Reduced timeout for faster redirect
+        }, 500);
       } else {
         const response = await fetch(`${baseUrl}/auth/register`, {
           method: "POST",
@@ -156,7 +145,6 @@ export const Card = memo(function Card({ onSuccess }: CardProps) {
     setShowPassword(prev => !prev);
   }, []);
 
-  // Memoized values to prevent re-renders
   const title = useMemo(() => isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta", [isLogin]);
   const subtitle = useMemo(() => isLogin
     ? "Introduce tus credenciales para acceder"
