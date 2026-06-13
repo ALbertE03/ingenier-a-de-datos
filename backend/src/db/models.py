@@ -40,6 +40,20 @@ class Location(Base):
     name = Column(String, unique=True, index=True, nullable=False)
 
     delay_records = relationship("DelayRecord", back_populates="location")
+    coordinate = relationship("LocationCoordinate", back_populates="location", uselist=False)
+
+
+class LocationCoordinate(Base):
+    __tablename__ = "location_coordinates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    location_id = Column(Integer, ForeignKey("locations.id"), unique=True, nullable=False, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    full_address = Column(String, nullable=True)
+    source = Column(String, default="nominatim", nullable=True)
+
+    location = relationship("Location", back_populates="coordinate")
 
 
 class IncidentType(Base):
