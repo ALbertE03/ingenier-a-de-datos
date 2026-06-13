@@ -14,25 +14,24 @@ from sqlalchemy import select
 from src.db.session import SessionLocal
 from src.db import models
 from src.utils import auth
+from src.utils.load_data import load_all_data
 
 load_dotenv()
 admin_email=os.getenv("ADMIN_EMAIL","admin@example.com")
 admin_password=os.getenv("ADMIN_PASSWORD","admin123")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Run Alembic migrations automatically on startup
     print("Running database migrations...")
     try:
         subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
         print("Database migrations applied successfully.")
-        
-        # Seed default admin user if it doesn't exist
+
         async with SessionLocal() as db:
             result = await db.execute(select(models.User).filter(models.User.username == "admin"))
             admin_user = result.scalars().first()
             if not admin_user:
                 print("Creating default admin user...")
-                hashed_pw = auth.get_password_hash(admin_password)  
+                hashed_pw = auth.get_password_hash(admin_password)
                 admin = models.User(
                     username="admin",
                     email=admin_email,
@@ -45,6 +44,8 @@ async def lifespan(app: FastAPI):
                 print("Default admin user created successfully.")
             else:
                 print("Admin user already exists.")
+
+            await load_all_data(db)
     except Exception as e:
         print(f"Error during startup migration/seeding: {e}")
     yield
