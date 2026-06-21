@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Card } from "./Card";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, BarChart3, AlertTriangle, Shield } from "lucide-react";
 import { UserProfile } from "./interfaces";
 import { AnalyticsDashboard } from "./analytics/Dashboard";
+import { IncidentDashboard } from "./incidents/IncidentDashboard";
+
+const API = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1`;
 
 export function Auth() {
   const [token, setToken] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export function Auth() {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+        const response = await fetch(`${API}/auth/me`, {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
         if (!isMounted.current) return;
@@ -87,6 +90,25 @@ export function Auth() {
     return <Card onSuccess={handleLoginSuccess} />;
   }
 
+  const [activeTab, setActiveTab] = useState<"analytics" | "incidents">("analytics");
+
+  const tabs = [];
+  if (user.role === "admin" || user.role === "analyst") {
+    tabs.push({ id: "analytics" as const, label: "Analítica", icon: BarChart3 });
+  }
+  if (user.role === "admin" || user.role === "inspector") {
+    tabs.push({ id: "incidents" as const, label: "Incidentes", icon: AlertTriangle });
+  }
+  if (tabs.length > 0 && !tabs.find(t => t.id === activeTab)) {
+    setActiveTab(tabs[0].id);
+  }
+
+  const roleColors: Record<string, string> = {
+    admin: "bg-red-500/20 text-red-400 border-red-500/30",
+    inspector: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    analyst: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  };
+
   return (
     <div className="w-full p-6 md:p-8 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-violet-600/10 blur-3xl -z-10"></div>
@@ -109,10 +131,7 @@ export function Auth() {
               <p className="text-xs font-bold text-white leading-tight">{user.username}</p>
               <p className="text-[10px] text-slate-400 leading-tight">{user.email}</p>
             </div>
-            <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${user.role === "admin"
-              ? "bg-red-500/20 text-red-400 border border-red-500/30"
-              : "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
-            }`}>
+            <span className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${roleColors[user.role] || "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"}`}>
               {user.role}
             </span>
           </div>
@@ -127,7 +146,32 @@ export function Auth() {
         </div>
       </div>
 
-      <AnalyticsDashboard />
+      {tabs.length > 1 && (
+        <div className="flex gap-1 mb-6 p-1 rounded-xl bg-white/5 border border-white/10 w-fit">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === tab.id
+                  ? "bg-white/10 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <tab.icon size={14} />
+              {tab.label}
+            </button>
+          ))}
+          {user.role === "admin" && (
+            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 cursor-pointer" title="Admin">
+              <Shield size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {activeTab === "analytics" && <AnalyticsDashboard />}
+      {activeTab === "incidents" && <IncidentDashboard token={token} />}
     </div>
   );
 }

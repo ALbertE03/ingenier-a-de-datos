@@ -8,7 +8,7 @@ import {
 import { RefreshCw, ChevronUp, ChevronDown, ChevronsUpDown, Search } from "lucide-react"
 import { Summary, DelaysByRoute, DelaysByMonth } from "./interfaces"
 
-const API_BASE = "http://localhost:8000/api/v1/analytics"
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/analytics`
 const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
 function n(v: number) { return v?.toLocaleString() ?? "0" }

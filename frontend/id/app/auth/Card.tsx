@@ -66,7 +66,7 @@ export const Card = memo(function Card({ onSuccess }: CardProps) {
     setSuccess("");
     setIsLoading(true);
 
-    const baseUrl = "http://localhost:8000/api/v1";
+    const baseUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1`;
 
     try {
       if (isLogin) {
