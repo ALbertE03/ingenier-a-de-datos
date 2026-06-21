@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sistema de Autenticación",
-  description: "Sistema de autenticación seguro",
+  title: "EcoTrans — Monitoreo de Transporte Urbano",
+  description: "Sistema de monitoreo y análisis de la red de transporte público",
 };
 
 export default function RootLayout({

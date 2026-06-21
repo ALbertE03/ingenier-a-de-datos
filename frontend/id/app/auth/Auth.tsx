@@ -95,10 +95,10 @@ export function Auth() {
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h2 className="text-xl font-bold text-white">TTC Streetcar Analytics</h2>
+            <h2 className="text-xl font-bold text-white">EcoTrans</h2>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Análisis de retrasos de tranvías de Toronto
+            Sistema de Monitoreo de la Red de Transporte Urbano
           </p>
         </div>
 

@@ -19,13 +19,13 @@ export default function Home() {
       <div className="w-full flex flex-col items-center relative z-10 space-y-4 max-w-6xl">
         <div className="text-center space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-semibold tracking-wide uppercase">
-            TTC Data Analytics
+            EcoTrans
           </div>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mt-2">
-            Portal de <span className="bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-400 bg-clip-text text-transparent">Analytics</span>
+            Red de <span className="bg-gradient-to-r from-violet-400 via-indigo-200 to-cyan-400 bg-clip-text text-transparent">Transporte Urbano</span>
           </h1>
           <p className="text-sm text-slate-400 max-w-lg mx-auto">
-            Análisis de retrasos de tranvías de Toronto — Gráficas, tablas dinámicas y métricas en tiempo real
+            Monitoreo y análisis de la red de transporte público — Frecuencias, rutas y eficiencia operativa
           </p>
         </div>
 
@@ -34,7 +34,7 @@ export default function Home() {
         </Suspense>
 
         <p className="text-xs text-slate-600 pt-2">
-          Sistema de Análisis de Datos TTC v2.0
+          EcoTrans — Sistema de Monitoreo de Transporte Urbano v1.0
         </p>
       </div>
     </main>

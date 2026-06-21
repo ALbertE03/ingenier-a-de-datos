@@ -40,7 +40,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="API",
+    title="EcoTrans API",
+    description="Sistema de Monitoreo y Análisis de la Red de Transporte Urbano",
     version="1.0.0",
     lifespan=lifespan
 )
