@@ -12,8 +12,6 @@ from sqlalchemy import select
 from src.db.session import SessionLocal
 from src.db import models
 from src.utils import auth
-from src.utils.load_data import load_all_data
-
 load_dotenv()
 admin_email = os.getenv("ADMIN_EMAIL", "admin@example.com")
 admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
@@ -39,8 +37,6 @@ async def lifespan(app: FastAPI):
             print("Default admin user created successfully.")
         else:
             print("Admin user already exists.")
-
-        await load_all_data(db)
     yield
 
 app = FastAPI(
