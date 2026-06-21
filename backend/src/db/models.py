@@ -107,6 +107,21 @@ class DelayRecord(Base):
     weather_id = Column(Integer, ForeignKey("weather_records.id"), nullable=True, index=True)
 
 
+class Incident(Base):
+    __tablename__ = "incidents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    incident_type = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    route_id = Column(Integer, ForeignKey("routes.id"), nullable=True, index=True)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=True, index=True)
+    report_date = Column(Date, nullable=False, index=True)
+    status = Column(String, default="open", nullable=False, index=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(Date, nullable=False)
+    resolved_at = Column(Date, nullable=True)
+
+
 class WeatherRecord(Base):
     __tablename__ = "weather_records"
 
