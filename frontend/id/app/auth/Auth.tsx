@@ -46,7 +46,7 @@ export function Auth() {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/api/auth/me", {
+        const response = await fetch("http://localhost:8000/api/v1/auth/me", {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
         if (!isMounted.current) return;
