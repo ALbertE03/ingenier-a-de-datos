@@ -31,6 +31,12 @@ Esto levanta:
 - **Backend API** en `http://localhost:8000`
 - **Frontend** en `http://localhost:3000`
 
+El backend ejecuta automáticamente:
+1. Migraciones de Alembic (creación de tablas)
+2. Población de la base de datos con datos históricos (CSV)
+3. Descarga de datos climáticos (Open-Meteo)
+4. Inicio del servidor
+
 ### Usuarios preconfigurados
 
 | Rol | Email | Contraseña |
