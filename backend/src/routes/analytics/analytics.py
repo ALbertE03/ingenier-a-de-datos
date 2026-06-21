@@ -197,6 +197,36 @@ async def weather_impact(db: AsyncSession = Depends(get_db)):
     }
 
 
+@router.get("/route-compliance")
+async def route_compliance(db: AsyncSession = Depends(get_db)):
+    total_all = await db.execute(select(func.count(models.DelayRecord.id)))
+    total_all = total_all.scalar() or 1
+
+    result = await db.execute(
+        select(
+            models.Route.code.label("route"),
+            func.count(models.DelayRecord.id).label("total_delays"),
+            func.avg(models.DelayRecord.min_delay).label("avg_delay_min"),
+            func.sum(case((models.DelayRecord.delay_severity == "Minor", 1), else_=0)).label("minor_count"),
+            func.sum(case((models.DelayRecord.delay_severity == "Severe", 1), else_=0)).label("severe_count"),
+        )
+        .join(models.DelayRecord, models.Route.id == models.DelayRecord.route_id)
+        .group_by(models.Route.code)
+        .order_by(desc("total_delays"))
+    )
+    return [
+        {
+            "route": r.route,
+            "total_delays": r.total_delays,
+            "avg_delay_min": round(r.avg_delay_min, 2) if r.avg_delay_min else 0,
+            "compliance_index": round((1 - r.total_delays / total_all) * 100, 2),
+            "minor_pct": round(r.minor_count / r.total_delays * 100, 1) if r.total_delays else 0,
+            "severe_pct": round(r.severe_count / r.total_delays * 100, 1) if r.total_delays else 0,
+        }
+        for r in result
+    ]
+
+
 @router.get("/worst-locations")
 async def worst_locations(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
