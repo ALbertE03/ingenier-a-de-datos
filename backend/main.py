@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy import select
 from src.db.session import SessionLocal
 from src.db import models
+from src.db.models import UserRole
 from src.utils import auth
 load_dotenv()
 admin_email = os.getenv("ADMIN_EMAIL", "admin@example.com")
@@ -29,7 +30,7 @@ async def lifespan(app: FastAPI):
                 username="admin",
                 email=admin_email,
                 hashed_password=hashed_pw,
-                role="admin",
+                role=UserRole.ADMIN,
                 is_active=True,
             )
             db.add(admin)

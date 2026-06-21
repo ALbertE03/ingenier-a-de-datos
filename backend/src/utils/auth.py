@@ -10,6 +10,7 @@ from src.routes.schemas import schemas_auth
 from src import config
 from src.db.session import get_db
 from src.db import models
+from src.db.models import UserRole
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -51,7 +52,7 @@ async def get_current_user(
         token_data = schemas_auth.TokenData(username=username, role=payload.get("role"))
     except JWTError:
         raise credentials_exception
-        
+
     result = await db.execute(select(models.User).filter(models.User.username == token_data.username))
     user = result.scalars().first()
     if user is None:
@@ -63,11 +64,16 @@ async def get_current_active_user(current_user: models.User = Depends(get_curren
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario inactivo")
     return current_user
 
-async def get_current_active_admin(current_user: models.User = Depends(get_current_active_user)) -> models.User:
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="El usuario no tiene suficientes privilegios para realizar esta acción"
-        )
-    return current_user
+def require_role(*roles: UserRole):
+    async def role_checker(current_user: models.User = Depends(get_current_active_user)) -> models.User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Se requiere uno de los siguientes roles: {', '.join(r.value for r in roles)}"
+            )
+        return current_user
+    return role_checker
 
+require_admin = require_role(UserRole.ADMIN)
+require_inspector = require_role(UserRole.INSPECTOR, UserRole.ADMIN)
+require_analyst = require_role(UserRole.ANALYST, UserRole.ADMIN)

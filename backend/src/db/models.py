@@ -1,6 +1,13 @@
+import enum
 from sqlalchemy import Column, Integer, String, Boolean, Float, Date, Time, ForeignKey, Index
 
 from src.db.session import Base
+
+
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    INSPECTOR = "inspector"
+    ANALYST = "analyst"
 
 
 class User(Base):
@@ -10,7 +17,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, default="user", nullable=False)
+    role = Column(String, default=UserRole.ANALYST.value, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
 
