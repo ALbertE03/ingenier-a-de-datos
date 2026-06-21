@@ -97,3 +97,17 @@ class DelayRecord(Base):
     month = Column(Integer, nullable=True, index=True)
     week = Column(Integer, nullable=True)
     quarter = Column(Integer, nullable=True)
+    weather_id = Column(Integer, ForeignKey("weather_records.id"), nullable=True, index=True)
+
+
+class WeatherRecord(Base):
+    __tablename__ = "weather_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, unique=True, index=True, nullable=False)
+    temp_max = Column(Float, nullable=True)
+    temp_min = Column(Float, nullable=True)
+    precipitation = Column(Float, nullable=True)
+    snowfall = Column(Float, nullable=True)
+    weather_code = Column(Integer, nullable=True)
+    weather_desc = Column(String, nullable=True)

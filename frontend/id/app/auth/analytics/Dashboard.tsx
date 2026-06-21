@@ -114,11 +114,40 @@ function SortableTable({ data }: { data: DelaysByRoute[] }) {
   )
 }
 
+function WeatherCards({ weather, loading }: any) {
+  if (loading) return (
+    <div className="rounded-2xl border border-white/10 bg-black/40 p-5 text-center text-slate-500 text-xs">
+      Cargando datos climáticos...
+    </div>
+  )
+  if (!weather) return null
+  const cards = [
+    { label: "General", value: `${weather.overall_avg_delay} min`, sub: "Promedio general", color: "from-violet-600/20 to-purple-600/5", border: "border-violet-500/20", text: "text-violet-300" },
+    { label: "Nieve", value: `${weather.snow_avg_delay} min`, sub: `vs ${weather.overall_avg_delay} min general`, color: "from-blue-600/20 to-cyan-600/5", border: "border-blue-500/20", text: "text-blue-300" },
+    { label: "Lluvia", value: `${weather.rain_avg_delay} min`, sub: `vs ${weather.overall_avg_delay} min general`, color: "from-emerald-600/20 to-teal-600/5", border: "border-emerald-500/20", text: "text-emerald-300" },
+    { label: "Frío (< -5°C)", value: `${weather.cold_avg_delay} min`, sub: `vs ${weather.overall_avg_delay} min general`, color: "from-cyan-600/20 to-sky-600/5", border: "border-cyan-500/20", text: "text-cyan-300" },
+    { label: "Despejado", value: `${weather.clear_avg_delay} min`, sub: `vs ${weather.overall_avg_delay} min general`, color: "from-amber-600/20 to-yellow-600/5", border: "border-amber-500/20", text: "text-amber-300" },
+  ]
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {cards.map(c => (
+        <div key={c.label} className={`relative overflow-hidden rounded-2xl border ${c.border} bg-gradient-to-br ${c.color} p-4`}>
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">{c.label}</p>
+          <p className={`text-lg md:text-xl font-black ${c.text} truncate`}>{c.value}</p>
+          {c.sub && <p className="text-[9px] text-slate-500 mt-1 truncate">{c.sub}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function AnalyticsDashboard() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [monthly, setMonthly] = useState<DelaysByMonth[]>([])
   const [routes, setRoutes] = useState<DelaysByRoute[]>([])
+  const [weather, setWeather] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [weatherLoading, setWeatherLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mounted = useRef(true)
 
@@ -143,7 +172,19 @@ export function AnalyticsDashboard() {
     }
   }, [])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
+  const fetchWeather = useCallback(async () => {
+    setWeatherLoading(true)
+    try {
+      const w = await fetch(`${API_BASE}/weather-impact`).then(r => r.json())
+      if (mounted.current) setWeather(w)
+    } catch {
+      // ignore
+    } finally {
+      if (mounted.current) setWeatherLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchAll(); fetchWeather() }, [fetchAll, fetchWeather])
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20">
@@ -170,9 +211,32 @@ export function AnalyticsDashboard() {
     retrasos: r.total_delays,
   }))
 
+  const weatherChartData = weather?.by_weather?.slice(0, 8) || []
+
   return (
     <div className="space-y-6">
       <SummaryCards summary={summary} />
+
+      <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+          Impacto del Clima en Retrasos
+        </h3>
+        <WeatherCards weather={weather} loading={weatherLoading} />
+
+        {weatherChartData.length > 0 && (
+          <div className="mt-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={weatherChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <XAxis dataKey="weather_desc" tick={{ fill: "#64748b", fontSize: 10 }} />
+                <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="avg_delay_min" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Promedio (min)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-2xl border border-white/10 bg-black/40 p-5">

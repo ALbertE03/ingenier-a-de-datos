@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, case
 from src.db.session import get_db
 from src.db import models
 
@@ -138,6 +138,63 @@ async def delays_by_day(db: AsyncSession = Depends(get_db)):
         }
         for r in result
     ]
+
+
+@router.get("/weather-impact")
+async def weather_impact(db: AsyncSession = Depends(get_db)):
+    avg_all = await db.execute(select(func.avg(models.DelayRecord.min_delay)))
+    avg_all = round(avg_all.scalar() or 0, 2)
+
+    snow_delay = await db.execute(
+        select(func.avg(models.DelayRecord.min_delay))
+        .join(models.WeatherRecord, models.DelayRecord.weather_id == models.WeatherRecord.id)
+        .where(models.WeatherRecord.snowfall > 0)
+    )
+    rain_delay = await db.execute(
+        select(func.avg(models.DelayRecord.min_delay))
+        .join(models.WeatherRecord, models.DelayRecord.weather_id == models.WeatherRecord.id)
+        .where(
+            models.WeatherRecord.precipitation > 0,
+            (models.WeatherRecord.snowfall.is_(None) | (models.WeatherRecord.snowfall == 0)),
+        )
+    )
+    cold_delay = await db.execute(
+        select(func.avg(models.DelayRecord.min_delay))
+        .join(models.WeatherRecord, models.DelayRecord.weather_id == models.WeatherRecord.id)
+        .where(models.WeatherRecord.temp_min < -5)
+    )
+    clear_delay = await db.execute(
+        select(func.avg(models.DelayRecord.min_delay))
+        .join(models.WeatherRecord, models.DelayRecord.weather_id == models.WeatherRecord.id)
+        .where(models.WeatherRecord.weather_code == 0)
+    )
+
+    by_weather = await db.execute(
+        select(
+            models.WeatherRecord.weather_desc,
+            func.count(models.DelayRecord.id).label("total_delays"),
+            func.avg(models.DelayRecord.min_delay).label("avg_delay_min"),
+        )
+        .join(models.DelayRecord, models.DelayRecord.weather_id == models.WeatherRecord.id)
+        .group_by(models.WeatherRecord.weather_desc)
+        .order_by(desc("total_delays"))
+    )
+
+    return {
+        "overall_avg_delay": avg_all,
+        "snow_avg_delay": round(snow_delay.scalar() or 0, 2),
+        "rain_avg_delay": round(rain_delay.scalar() or 0, 2),
+        "cold_avg_delay": round(cold_delay.scalar() or 0, 2),
+        "clear_avg_delay": round(clear_delay.scalar() or 0, 2),
+        "by_weather": [
+            {
+                "weather_desc": r.weather_desc,
+                "total_delays": r.total_delays,
+                "avg_delay_min": round(r.avg_delay_min, 2) if r.avg_delay_min else 0,
+            }
+            for r in by_weather
+        ],
+    }
 
 
 @router.get("/worst-locations")
