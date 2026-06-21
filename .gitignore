@@ -1,3 +1,5 @@
 .DS_Store
-.DS_Store? # También prevenir en Windows
-**/.DS_Store # Prevenir en todos los subdirectorios
+.DS_Store?
+**/.DS_Store
+
+.env

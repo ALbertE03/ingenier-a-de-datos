@@ -3,15 +3,15 @@ services:
     image: postgres:17-alpine
     container_name: ecotrans-db
     environment:
-      POSTGRES_USER: ecotrans
-      POSTGRES_PASSWORD: ecotrans123
-      POSTGRES_DB: ecotrans
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ecotrans -d ecotrans"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,13 +25,13 @@ services:
       database:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql+asyncpg://ecotrans:ecotrans123@database:5432/ecotrans"
-      SECRET_KEY: "ecotrans_secret_key_change_in_production"
-      ALGORITHM: "HS256"
-      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
-      ADMIN_EMAIL: "admin@ecotrans.com"
-      ADMIN_PASSWORD: "admin123"
-      ORIGINS: "http://localhost:3000,http://frontend:3000"
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ORIGINS: ${ORIGINS}
     ports:
       - "8000:8000"
     networks:
@@ -50,7 +50,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     networks:
       - ecotrans_net
 

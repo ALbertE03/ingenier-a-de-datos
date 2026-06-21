@@ -22,6 +22,9 @@ Plataforma de monitoreo y análisis de la red de transporte público. Evalúa fr
 git clone <repo-url> ecotrans
 cd ecotrans
 
+# Copiar variables de entorno y ajustar si es necesario
+cp .env.example .env
+
 # Construir e iniciar todos los servicios
 docker compose up --build
 ```
